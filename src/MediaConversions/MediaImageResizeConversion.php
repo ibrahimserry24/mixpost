@@ -4,7 +4,8 @@ namespace Inovector\Mixpost\MediaConversions;
 
 use Inovector\Mixpost\Abstracts\MediaConversion;
 use Inovector\Mixpost\Support\MediaConversionData;
-use Intervention\Image\Facades\Image;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 
 class MediaImageResizeConversion extends MediaConversion
 {
@@ -45,12 +46,10 @@ class MediaImageResizeConversion extends MediaConversion
         // TODO: Check if works with S3 driver
         $content = $this->filesystem($this->getFromDisk())->get($this->getFilepath());
 
-        $image = Image::make($content);
+        $manager = new ImageManager(new Driver());
+        $image = $manager->read($content);
 
-        $convert = $image->resize($this->width, $this->height, function ($constraint) {
-            $constraint->aspectRatio();
-            $constraint->upsize();
-        })->encode();
+        $convert = $image->scale($this->width, $this->height)->encode();
 
         $this->filesystem()->put($this->getPath(), $convert->getEncoded(), 'public');
 
